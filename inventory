@@ -1,0 +1,21 @@
+
+kubic-0 ansible_ssh_host=192.168.51.213 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+kubic-1 ansible_ssh_host=192.168.51.214 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+kubic-2 ansible_ssh_host=192.168.51.192 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+kubic-3 ansible_ssh_host=192.168.51.232 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+kubic-4 ansible_ssh_host=192.168.51.248 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+kubic-5 ansible_ssh_host=192.168.51.224 ansible_ssh_user=root ansible_ssh_private_key_file=/Users/fan/.ssh/id_rsa ansible_python_interpreter=/usr/bin/python3
+
+[master-except-first]
+kubic-1
+kubic-2
+
+[worker]
+kubic-3
+kubic-4
+kubic-5
+
+[defaults]
+host_key_checking=False
+stdout_callback = debug
+

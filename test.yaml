@@ -1,0 +1,50 @@
+---
+- name: This is a hello-world example
+  hosts: kubic-0
+  tasks:
+  - name: create fact
+    set_fact:
+      join_str: "date"
+  - name: print 
+    debug:
+      msg: "---print set_fact: {{ join_str }}"
+  #- name: Copy private key to master 0
+  #  copy: 
+  #    src: /Users/fan/.ssh/id_rsa
+  #    dest: .ssh/id_rsa
+  - name: fetch
+    fetch:
+      src: /etc/nfs.conf
+      dest: temp/nfs.conf
+      flat: yes
+  #https://github.com/openshift/openshift-ansible/blob/master/roles/openshift_control_plane/tasks/check_master_api_is_ready.yml
+  - name: Wait for APIs to become available
+    command: kubectl get --raw /apis/autoscaling/v1
+    register: autoscalingv1
+    until: autoscalingv1.failed != True and (autoscalingv1.stdout | from_json).apiVersion == "v1"
+    retries: 2
+    delay: 5
+  - name: print
+    debug:
+      msg: "---kubect return is: {{autoscalingv1}}"
+
+- name: This is a hello-world example
+  hosts: kubic-1
+  tasks:
+  - name: print on another host
+    debug:
+      msg: "---print set_fact on another host: {{ hostvars['kubic-0']['join_str']}}"
+  - name: execute shell
+    shell: "{{ hostvars['kubic-0']['join_str']}} -u"
+
+- hosts: 127.0.0.1
+  connection: local
+  tasks:
+    - name: Run localcommand
+      shell: "ETCDCTL_API=3 etcdctl --endpoints=https://example-client.default.svc:30373  --cert=certs/etcd-client.crt --key=certs/etcd-client.key --cacert=certs/etcd-client-ca.crt member list -w table"
+
+#- hosts: kubic-1
+#  tasks:    
+#   - name: Copy Remote-To-Remote (from kubic-0 to kubic-1). Freeze.
+#     synchronize: src=/etc/kubernetes/pki/ca.crt dest=/root/ca.crt
+#     delegate_to: kubic-0

@@ -1,0 +1,177 @@
+---
+- name: Create first master node
+  hosts: kubic-0
+  tasks:
+  - name: Create a file called '/tmp/testfile.txt' with the content 'hello world'.
+    copy: 
+      content: "hello world haha\n" 
+      dest: /tmp/testfile.txt
+  - name: Create dir
+    command: mkdir -p /etc/kubernetes/pki/etcd/
+  - name: Copy private key to master 0
+    copy: 
+      src: /Users/fan/.ssh/id_rsa
+      dest: .ssh/id_rsa
+  - name: Copy tls file 1
+    copy: 
+      src: certs/etcd-client-ca.crt
+      dest: /etc/kubernetes/pki/etcd/ca.crt
+  - name: Copy tls file 2
+    copy: 
+      src: certs/etcd-client.crt
+      dest: /etc/kubernetes/pki/apiserver-etcd-client.crt
+  - name: Copy tls file 3
+    copy: 
+      src: certs/etcd-client.key
+      dest: /etc/kubernetes/pki/apiserver-etcd-client.key
+  - name: Copy kubeadm-config.yaml
+    copy: 
+      src: kubeadm-config.yaml
+      dest: /root
+  - name: Init master
+    command: kubeadm init --config kubeadm-config.yaml --cri-socket="/var/run/crio/crio.sock"
+    register: kubeadm_init
+  - fail:
+      msg: "kubeadm init command failed."
+    when: kubeadm_init.stdout.find ("kubeadm join") == -1
+  - name: Store kubeadm join string
+    set_fact:
+      join_str: "{{ kubeadm_init.stdout | regex_search('kubeadm join(.*)$') }}"
+  - name: Print join string 
+    debug:
+      msg: "---Print join string: {{ join_str }}"
+  - name: Copy master cert files. I didn't known how to use ssh agent to make 'synchronize' work
+    fetch:
+      src: /etc/kubernetes/pki/ca.crt
+      dest: temp/ca.crt
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/ca.key
+      dest: temp/ca.key
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/sa.pub
+      dest: temp/sa.pub
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/sa.pub
+      dest: temp/sa.pub
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/sa.key
+      dest: temp/sa.key
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/front-proxy-ca.crt
+      dest: temp/front-proxy-ca.crt
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/front-proxy-ca.key
+      dest: temp/front-proxy-ca.key
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/apiserver-etcd-client.crt
+      dest: temp/apiserver-etcd-client.crt
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/apiserver-etcd-client.key
+      dest: temp/apiserver-etcd-client.key
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/pki/etcd/ca.crt
+      dest: temp/etcd-ca.crt
+      flat: yes
+  - name: Copy master cert files
+    fetch:
+      src: /etc/kubernetes/admin.conf
+      dest: temp/admin.conf
+      flat: yes
+  #- name: wait for pods to come up
+  #  shell: kubectl get pods -o json
+  #  until: kubectl_get_pods.stdout|from_json|json_query('items[*].status.phase')|unique == ["Running"]
+  - name: Creates kube directory
+    file:
+      path: .kube
+      state: directory
+  - name: Copy kubeconfig
+    copy:
+      src: temp/admin.conf
+      dest: .kube/config
+  - name: Wait for APIs to become available. https://github.com/openshift/openshift-ansible/blob/master/roles/openshift_control_plane/tasks/check_master_api_is_ready.yml
+    command: kubectl get --raw /apis/autoscaling/v1
+    register: autoscalingv1
+    until: autoscalingv1.failed != True and (autoscalingv1.stdout | from_json).apiVersion == "v1"
+    retries: 60
+    delay: 5
+  - name: Apply CNI
+    command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml
+ 
+
+- name: Add other master node to control panel. concurrent or not?
+  hosts: master-except-first
+  tasks:
+  - name: Creates directory
+    file:
+      path: /etc/kubernetes/pki/etcd
+      state: directory
+  - name: Copy master cert files. I didn't known how to use ssh agent to make 'synchronize' work
+    copy:
+      dest: /etc/kubernetes/pki/ca.crt
+      src: temp/ca.crt
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/ca.key
+      src: temp/ca.key
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/sa.pub
+      src: temp/sa.pub
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/sa.pub
+      src: temp/sa.pub
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/sa.key
+      src: temp/sa.key
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/front-proxy-ca.crt
+      src: temp/front-proxy-ca.crt
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/front-proxy-ca.key
+      src: temp/front-proxy-ca.key
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/apiserver-etcd-client.crt
+      src: temp/apiserver-etcd-client.crt
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/apiserver-etcd-client.key
+      src: temp/apiserver-etcd-client.key
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/pki/etcd/ca.crt
+      src: temp/etcd-ca.crt
+  - name: Copy master cert files
+    copy:
+      dest: /etc/kubernetes/admin.conf
+      src: temp/admin.conf
+  - name: Join node
+    shell: "{{ hostvars['kubic-0']['join_str']}} --experimental-control-plane --cri-socket='/var/run/crio/crio.sock'"
+
+- name: Work node join
+  hosts: worker
+  tasks:
+    - name: Join work node
+      shell: "{{ hostvars['kubic-0']['join_str']}} --cri-socket='/var/run/crio/crio.sock'"
