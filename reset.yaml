@@ -9,4 +9,4 @@
   connection: local
   tasks:
     - name: Clear etcd. Need install etcd locally.
-      shell: "ETCDCTL_API=3 etcdctl --endpoints=https://example-client.default.svc:30373  --cert=certs/etcd-client.crt --key=certs/etcd-client.key --cacert=certs/etcd-client-ca.crt del '' --prefix"
+      shell: "ETCDCTL_API=3 etcdctl --endpoints=https://example-client.default.svc:31013  --cert=certs/etcd-client.crt --key=certs/etcd-client.key --cacert=certs/etcd-client-ca.crt del '' --prefix"

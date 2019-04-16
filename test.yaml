@@ -37,6 +37,18 @@
   - name: execute shell
     shell: "{{ hostvars['kubic-0']['join_str']}} -u"
 
+- name: This is a hello-world example
+  hosts: kubic-1
+  tasks:
+  - name: search join str
+    tags:
+      - join
+    vars:
+     contents: "{{ lookup('file', './kubeadm-init-stdout.txt') }}"
+    debug:
+      msg: "--- join str is:  {{ contents | regex_search('kubeadm (.*)$')  }}"
+
+
 - hosts: 127.0.0.1
   connection: local
   tasks:

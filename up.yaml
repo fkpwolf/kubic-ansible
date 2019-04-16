@@ -34,12 +34,9 @@
   - fail:
       msg: "kubeadm init command failed."
     when: kubeadm_init.stdout.find ("kubeadm join") == -1
-  - name: Store kubeadm join string
-    set_fact:
-      join_str: "{{ kubeadm_init.stdout | regex_search('kubeadm join(.*)$') }}"
-  - name: Print join string 
+  - name: Print kubeadm init stdout
     debug:
-      msg: "---Print join string: {{ join_str }}"
+      msg: "---Print kubeadm init stdout: {{ kubeadm_init.stdout }}"
   - name: Copy master cert files. I didn't known how to use ssh agent to make 'synchronize' work
     fetch:
       src: /etc/kubernetes/pki/ca.crt
@@ -112,6 +109,15 @@
     until: autoscalingv1.failed != True and (autoscalingv1.stdout | from_json).apiVersion == "v1"
     retries: 60
     delay: 5
+  - name: Get join string
+    command: kubeadm token create --print-join-command
+    register: kubeadm_join_str
+  - name: Store kubeadm join string
+    set_fact:
+      join_str: "{{ kubeadm_join_str.stdout }}"
+  - name: Print join string 
+    debug:
+      msg: "---Print join string: {{ join_str }}"
   - name: Apply CNI
     command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/a70459be0084506e4ec919aa1c114638878db11b/Documentation/kube-flannel.yml
  

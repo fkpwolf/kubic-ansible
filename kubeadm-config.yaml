@@ -10,7 +10,7 @@ networking:
 etcd:
     external:
         endpoints:
-        - https://example-client.default.svc:30373
+        - https://example-client.default.svc:31013
         caFile: /etc/kubernetes/pki/etcd/ca.crt
         certFile: /etc/kubernetes/pki/apiserver-etcd-client.crt
         keyFile: /etc/kubernetes/pki/apiserver-etcd-client.key

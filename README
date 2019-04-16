@@ -1,4 +1,0 @@
-
-Run as `ANSIBLE_STDOUT_CALLBACK=debug ansible-playbook -i inventory up.yaml`
-
-If need debug info, append `-vvv`.
